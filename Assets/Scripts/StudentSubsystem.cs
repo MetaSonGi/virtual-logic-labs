@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -35,7 +35,7 @@ public class StudentSubsystem : MonoBehaviour {
     private void EnterSandboxMode()
     {
         Debug.Log("Sandbox Button Clicked");
-        SceneManager.LoadScene("Scenes/SandboxLab");
+        SceneManager.LoadScene("Scenes/Lab3D");
     }
 
     private void EnterLab1()
@@ -65,7 +65,7 @@ public class StudentSubsystem : MonoBehaviour {
     private void Logout()
     {
         Debug.Log("Logout Button Clicked");
-        SceneManager.LoadScene("Scenes/Login");
+        SceneManager.LoadScene("Scenes/Start");
     }
 
 

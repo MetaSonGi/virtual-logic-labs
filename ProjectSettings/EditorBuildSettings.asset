@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Login.unity
-    guid: 999e738f7193fc347ae1e0854339d0fa
+    path: Assets/Scenes/Start.unity
+    guid: 53d736782ed4c614e9781cb2a05559e3
   - enabled: 1
     path: Assets/Scenes/StudentSubsystem.unity
     guid: 13ba1a9092397104c82099cc8ca17101
@@ -41,3 +41,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Lab2.unity
     guid: 99439b72af11d5941b9ca970fe793255
+  - enabled: 1
+    path: Assets/Scenes/Lab3D.unity
+    guid: a4494cf425ea1ea44bd86f33687f0036
+  m_configObjects: {}
+  m_UseUCBPForAssetBundles: 0

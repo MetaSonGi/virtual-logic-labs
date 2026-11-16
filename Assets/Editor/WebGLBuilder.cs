@@ -7,12 +7,14 @@ public static class WebGLBuilder
     [MenuItem("Build/WebGL (docs)")]
     public static void Build()
     {
+        Lab3DSetup.Setup();
         bool dev = System.Environment.GetCommandLineArgs().Contains("-devbuild");
         PlayerSettings.WebGL.exceptionSupport = dev ? WebGLExceptionSupport.FullWithStacktrace : WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
         var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
         PlayerSettings.WebGL.decompressionFallback = false;
         PlayerSettings.productName = "Virtual Logic Labs";
+        PlayerSettings.WebGL.template = "PROJECT:Neon";
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
         {
             scenes = scenes,

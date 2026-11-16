@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -40,7 +40,7 @@ public class AdminButtonManager : MonoBehaviour {
     {
         Destroy(scrollView);
         Destroy(createUser);
-        SceneManager.LoadScene("Scenes/Login");    
+        SceneManager.LoadScene("Scenes/Start");    
     }
 
     private void AddUser()
