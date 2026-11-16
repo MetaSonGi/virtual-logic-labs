@@ -9,7 +9,7 @@ public static class WebGLBuilder
     {
         Lab3DSetup.Setup();
         bool dev = System.Environment.GetCommandLineArgs().Contains("-devbuild");
-        PlayerSettings.WebGL.exceptionSupport = dev ? WebGLExceptionSupport.FullWithStacktrace : WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
+        PlayerSettings.WebGL.exceptionSupport = dev ? WebGLExceptionSupport.FullWithStacktrace : WebGLExceptionSupport.FullWithStacktrace;
         var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
         PlayerSettings.WebGL.decompressionFallback = false;
