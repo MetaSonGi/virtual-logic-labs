@@ -9,7 +9,9 @@ public static class WebGLBuilder
     {
         Lab3DSetup.Setup();
         bool dev = System.Environment.GetCommandLineArgs().Contains("-devbuild");
-        PlayerSettings.WebGL.exceptionSupport = dev ? WebGLExceptionSupport.FullWithStacktrace : WebGLExceptionSupport.FullWithStacktrace;
+        // Keep full exception support: "ExplicitlyThrownExceptionsOnly" crashed the 3D lab on the live site
+        // (memory access out of bounds), and "FullWithoutStacktrace" built a player with missing UI text.
+        PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.FullWithStacktrace;
         var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
         PlayerSettings.WebGL.decompressionFallback = false;
