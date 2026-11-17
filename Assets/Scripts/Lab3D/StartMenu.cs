@@ -1,4 +1,5 @@
-// 시작 화면 — 입력 없이 버튼 하나로 들어가기
+// 시작 화면 — 로그인 없이 실험 목록에서 골라 바로 시작
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,8 +9,15 @@ public class StartMenu : MonoBehaviour
     Transform chip;
     Transform[] orbs;
     Canvas canvas;
-    RectTransform card;
+    RectTransform head, grid;
+    readonly System.Collections.Generic.List<RectTransform> cards = new System.Collections.Generic.List<RectTransform>();
+    readonly System.Collections.Generic.List<int> cardIndex = new System.Collections.Generic.List<int>();
+    readonly System.Collections.Generic.List<Image> cardImages = new System.Collections.Generic.List<Image>();
+    int hovered = -1;
+    readonly System.Collections.Generic.List<RectTransform> headers = new System.Collections.Generic.List<RectTransform>();
     int lastW, lastH;
+
+    static readonly string[] Groups = { "논리 회로", "공압", "유압", "공유압" };
 
     void Start()
     {
@@ -26,10 +34,10 @@ public class StartMenu : MonoBehaviour
         sun.intensity = 1.1f;
         sun.transform.rotation = Quaternion.Euler(50, 30, 0);
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-        RenderSettings.ambientSkyColor = new Color(0.35f, 0.42f, 0.65f);
-        RenderSettings.ambientEquatorColor = new Color(0.14f, 0.16f, 0.26f);
+        RenderSettings.ambientSkyColor = new Color(0.3f, 0.36f, 0.55f);
+        RenderSettings.ambientEquatorColor = new Color(0.12f, 0.14f, 0.22f);
         RenderSettings.ambientGroundColor = new Color(0.04f, 0.05f, 0.09f);
-        RenderSettings.reflectionIntensity = 0.15f;
+        RenderSettings.reflectionIntensity = 0.3f;
 
         BuildDecor();
         BuildUI();
@@ -39,11 +47,10 @@ public class StartMenu : MonoBehaviour
     {
         var kit = Lab3DArt.Load();
         chip = new GameObject("Chip").transform;
-        chip.position = new Vector3(2.6f, 0, 0);
-        var body = kit.Cube(chip, new Vector3(0, 0, 0), new Vector3(3.2f, 0.8f, 2.2f), kit.Body(new Color(0.05f, 0.07f, 0.11f)));
+        var body = kit.Cube(chip, Vector3.zero, new Vector3(3.2f, 0.8f, 2.2f), kit.Body(new Color(0.05f, 0.07f, 0.11f)));
         Destroy(body.GetComponent<Collider>());
         kit.FlatText(chip, "LOGIC", new Vector3(0, 0.41f, 0.15f), 0.11f, new Color(0.84f, 0.87f, 0.96f));
-        kit.FlatText(chip, "A·B  A+B  A'", new Vector3(0, 0.41f, -0.45f), 0.05f, UIKit.Neon);
+        kit.FlatText(chip, "공압 · 유압 · 논리", new Vector3(0, 0.41f, -0.45f), 0.05f, UIKit.Neon);
         for (int i = 0; i < 4; i++)
         {
             float x = -1.2f + i * 0.8f;
@@ -56,9 +63,9 @@ public class StartMenu : MonoBehaviour
         orbs = new Transform[6];
         for (int i = 0; i < orbs.Length; i++)
         {
-            var o = kit.Sphere(null, Vector3.zero, 0.14f, kit.Unlit(UIKit.Neon * 1.4f));
+            var o = kit.Sphere(null, Vector3.zero, 0.14f, kit.Unlit(i % 2 == 0 ? UIKit.Neon * 1.4f : UIKit.Accent * 1.4f));
             Destroy(o.GetComponent<Collider>());
-            kit.Halo(o.transform, UIKit.Neon, 0.9f);
+            kit.Halo(o.transform, i % 2 == 0 ? UIKit.Neon : UIKit.Accent, 0.9f);
             orbs[i] = o.transform;
         }
     }
@@ -66,21 +73,51 @@ public class StartMenu : MonoBehaviour
     void BuildUI()
     {
         canvas = UIKit.MakeCanvas();
-        card = UIKit.Rect(canvas.transform, "Card", new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(70, 0), new Vector2(520, 560));
+        head = UIKit.Rect(canvas.transform, "Head", new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -40), new Vector2(560, 150));
+        var kicker = UIKit.Label(head, "VIRTUAL LOGIC LABS", 17, UIKit.Neon, TextAnchor.UpperLeft, FontStyle.Bold);
+        Place(kicker.rectTransform, 0, 26);
+        var title = UIKit.Label(head, "가상 회로 · 공유압 실험실", 42, UIKit.Text, TextAnchor.UpperLeft, FontStyle.Bold);
+        Place(title.rectTransform, 26, 58);
+        var done = Experiments.Done();
+        int missions = Experiments.All.Count(e => e.check != ExpCheck.None);
+        int cleared = Experiments.All.Count(e => e.check != ExpCheck.None && done.Contains(e.id));
+        var sub = UIKit.Label(head, $"실험을 골라 바로 시작하세요 — 로그인 필요 없음 · 미션 {cleared}/{missions} 완료", 18, UIKit.Muted, TextAnchor.UpperLeft);
+        Place(sub.rectTransform, 92, 30);
 
-        var kicker = UIKit.Label(card, "VIRTUAL LOGIC LABS", 18, UIKit.Neon, TextAnchor.UpperLeft, FontStyle.Bold);
-        Place(kicker.rectTransform, 0, 40);
-        var title = UIKit.Label(card, "가상 논리회로 실험실", 48, UIKit.Text, TextAnchor.UpperLeft, FontStyle.Bold);
-        Place(title.rectTransform, 30, 70);
-        var sub = UIKit.Label(card, "3D 브레드보드에 칩을 놓고 전선을 이은 뒤\n전원을 켜서 신호가 흐르는 것을 확인해 보세요.", 20, UIKit.Muted, TextAnchor.UpperLeft);
-        Place(sub.rectTransform, 100, 70);
+        grid = UIKit.Rect(canvas.transform, "Grid", new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(56, -200), new Vector2(760, 480));
+        foreach (var g in Groups)
+        {
+            var list = Experiments.All.Select((e, i) => (e, i)).Where(t => t.e.group == g).ToList();
+            if (list.Count == 0) continue;
+            var h = UIKit.Rect(grid, "H_" + g, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(300, 26));
+            var color = g == "논리 회로" ? UIKit.Neon : g == "유압" ? UIKit.Amber : UIKit.Accent;
+            UIKit.Label(h, g == "공유압" ? "자유 실험 (공유압)" : g, 16, color, TextAnchor.MiddleLeft, FontStyle.Bold);
+            headers.Add(h);
+            foreach (var (e, i) in list) { cards.Add(MakeCard(e, i, color, done.Contains(e.id))); cardIndex.Add(i); }
+        }
+        var credit = UIKit.Label(canvas.transform, "원작 Rutgers ECE 2018 Group 10 · Unity 6 WebGL · MetaSonGi", 13, UIKit.Muted, TextAnchor.LowerLeft);
+        credit.rectTransform.offsetMin = new Vector2(56, 14);
+        credit.rectTransform.offsetMax = new Vector2(-20, 0);
+    }
 
-        MakeButton("3D 회로 실험실  시작", "전원 · 전선 연결 · 진리표", 200, UIKit.Neon, new Color(0.02f, 0.07f, 0.05f), true, () => SceneManager.LoadScene("Scenes/Lab3D"));
-        MakeButton("학생 실습", "원작 Lab 1 · Lab 2 (영문)", 300, UIKit.Bg2, UIKit.Text, false, () => SceneManager.LoadScene("Scenes/StudentSubsystem"));
-        MakeButton("관리자 화면", "원작 Admin (영문)", 390, UIKit.Bg2, UIKit.Text, false, () => SceneManager.LoadScene("Scenes/AdminSubsystem"));
-
-        var credit = UIKit.Label(card, "로그인 없이 바로 시작합니다 · 원작 Rutgers ECE 2018 Group 10 · Unity 6 WebGL", 14, UIKit.Muted, TextAnchor.UpperLeft);
-        Place(credit.rectTransform, 490, 40);
+    RectTransform MakeCard(Experiment e, int index, Color accent, bool done)
+    {
+        var rt = UIKit.Rect(grid, e.id, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(244, 70));
+        // clicks are hit-tested by hand in Update (the UI raycaster missed these cards in the web build)
+        cardImages.Add(UIKit.Box(rt, UIKit.Bg2, UIKit.Border));
+        var stripe = UIKit.Rect(rt, "Stripe", new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(0, 0), new Vector2(5, -16));
+        stripe.anchoredPosition = new Vector2(6, 0);
+        var si = stripe.gameObject.AddComponent<Image>();
+        si.color = accent;
+        si.raycastTarget = false;
+        string mark = done ? "  <color=#00e5a0>완료</color>" : "";
+        var t = UIKit.Label(rt, $"<color=#8b98b8>{index + 1:00}</color>  {e.title}{mark}", 16, UIKit.Text, TextAnchor.UpperLeft, FontStyle.Bold);
+        t.rectTransform.offsetMin = new Vector2(20, 0); t.rectTransform.offsetMax = new Vector2(-10, -12);
+        string hint = string.IsNullOrEmpty(e.goal) ? "자유 실험 — 예제부터 시작" : e.goal;
+        var s = UIKit.Label(rt, hint, 12, UIKit.Muted, TextAnchor.LowerLeft);
+        s.rectTransform.offsetMin = new Vector2(20, 12); s.rectTransform.offsetMax = new Vector2(-10, 0);
+        s.horizontalOverflow = HorizontalWrapMode.Overflow;
+        return rt;
     }
 
     static void Place(RectTransform rt, float top, float height)
@@ -90,18 +127,32 @@ public class StartMenu : MonoBehaviour
         rt.sizeDelta = new Vector2(0, height);
     }
 
-    void MakeButton(string text, string hint, float top, Color bg, Color fg, bool primary, System.Action onClick)
+    void Layout()
     {
-        float h = primary ? 82 : 74;
-        var rt = UIKit.Rect(card, text, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -top), new Vector2(0, h));
-        var b = UIKit.Button(rt, "", 24, bg, fg, onClick, primary ? (Color?)null : UIKit.Border);
-        var main = UIKit.Label(rt, text, primary ? 26 : 23, fg, TextAnchor.UpperLeft, FontStyle.Bold);
-        main.rectTransform.offsetMin = new Vector2(24, 0); main.rectTransform.offsetMax = new Vector2(-24, -14);
-        var small = UIKit.Label(rt, hint, 15, primary ? new Color(0.02f, 0.2f, 0.14f) : UIKit.Muted, TextAnchor.LowerLeft);
-        small.rectTransform.offsetMin = new Vector2(24, 12); small.rectTransform.offsetMax = new Vector2(-24, 0);
-        var arrow = UIKit.Label(rt, ">", 28, fg, TextAnchor.MiddleRight, FontStyle.Bold);
-        arrow.rectTransform.offsetMax = new Vector2(-22, 0);
-        b.GetComponentInChildren<Text>().text = "";
+        UIKit.FitScaler(canvas);
+        bool portrait = Screen.height > Screen.width;
+        int cols = portrait ? 2 : 3;
+        float cw = portrait ? 330 : 244, ch = 70, gx = 10, gy = 10;
+        head.anchoredPosition = portrait ? new Vector2(30, -40) : new Vector2(56, -40);
+        head.sizeDelta = portrait ? new Vector2(700, 150) : new Vector2(760, 150);
+        grid.anchoredPosition = portrait ? new Vector2(30, -200) : new Vector2(56, -196);
+        float y = 0;
+        int ci = 0, hi = 0;
+        foreach (var g in Groups)
+        {
+            int count = Experiments.All.Count(e => e.group == g);
+            if (count == 0) continue;
+            headers[hi++].anchoredPosition = new Vector2(0, -y);
+            y += 32;
+            for (int k = 0; k < count; k++, ci++)
+            {
+                var rt = cards[ci];
+                rt.sizeDelta = new Vector2(cw, ch);
+                rt.anchoredPosition = new Vector2((k % cols) * (cw + gx), -(y + (k / cols) * (ch + gy)));
+            }
+            y += Mathf.CeilToInt(count / (float)cols) * (ch + gy) + 6;
+        }
+        chip.position = portrait ? new Vector3(0, -3.6f, 4) : new Vector3(4.6f, 1.4f, 2);
     }
 
     void Update()
@@ -116,13 +167,22 @@ public class StartMenu : MonoBehaviour
         if (Screen.width != lastW || Screen.height != lastH)
         {
             lastW = Screen.width; lastH = Screen.height;
-            UIKit.FitScaler(canvas);
-            bool portrait = Screen.height > Screen.width;
-            card.anchorMin = card.anchorMax = portrait ? new Vector2(0.5f, 0.42f) : new Vector2(0, 0.5f);
-            card.pivot = portrait ? new Vector2(0.5f, 0.5f) : new Vector2(0, 0.5f);
-            card.anchoredPosition = portrait ? Vector2.zero : new Vector2(70, 0);
-            card.sizeDelta = portrait ? new Vector2(660, 560) : new Vector2(520, 560);
-            chip.position = portrait ? new Vector3(0, 2.6f, 2) : new Vector3(2.6f, 0, 0);
+            Layout();
+        }
+        Vector2 mp = Input.mousePosition;
+        int over = -1;
+        for (int i = 0; i < cards.Count; i++)
+            if (RectTransformUtility.RectangleContainsScreenPoint(cards[i], mp, null)) { over = i; break; }
+        if (over != hovered)
+        {
+            if (hovered >= 0) cardImages[hovered].color = UIKit.Bg2;
+            hovered = over;
+            if (over >= 0) cardImages[over].color = UIKit.Hex("1a2547");
+        }
+        if (over >= 0 && Input.GetMouseButtonUp(0))
+        {
+            Experiments.Current = cardIndex[over];
+            SceneManager.LoadScene("Scenes/Lab3D");
         }
     }
 }

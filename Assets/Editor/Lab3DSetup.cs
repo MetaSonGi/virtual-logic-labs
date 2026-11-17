@@ -19,13 +19,12 @@ public static class Lab3DSetup
         MakeScene(StartScene, typeof(StartMenu));
         MakeScene(LabScene, typeof(Lab3D));
 
-        // Start first, then the original scenes (without the old typing login), then the 3D lab
-        var old = EditorBuildSettings.scenes
-            .Where(s => s.path != StartScene && s.path != LabScene && !s.path.EndsWith("/Login.unity"))
-            .Select(s => s.path);
-        var list = new List<EditorBuildSettingsScene> { new EditorBuildSettingsScene(StartScene, true) };
-        list.AddRange(old.Select(p => new EditorBuildSettingsScene(p, true)));
-        list.Add(new EditorBuildSettingsScene(LabScene, true));
+        // only the experiment list and the 3D lab; the original 2018 scenes stay in the project but are not built
+        var list = new List<EditorBuildSettingsScene>
+        {
+            new EditorBuildSettingsScene(StartScene, true),
+            new EditorBuildSettingsScene(LabScene, true),
+        };
         EditorBuildSettings.scenes = list.ToArray();
         AssetDatabase.SaveAssets();
         Debug.Log("Lab3D setup: " + string.Join(", ", list.Select(s => Path.GetFileNameWithoutExtension(s.path))));

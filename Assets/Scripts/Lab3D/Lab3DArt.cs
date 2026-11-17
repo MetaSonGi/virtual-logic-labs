@@ -171,6 +171,22 @@ public class Lab3DArt
         return pts;
     }
 
+    /// <summary>Hose shape: a soft arch between two ports in any direction.</summary>
+    public static Vector3[] Arc(Vector3 a, Vector3 b, int n)
+    {
+        float d = Vector3.Distance(a, b);
+        float h = 0.6f + d * 0.12f;
+        var p1 = a + Vector3.up * h;
+        var p2 = b + Vector3.up * h;
+        var pts = new Vector3[n + 1];
+        for (int i = 0; i <= n; i++)
+        {
+            float t = i / (float)n, u = 1 - t;
+            pts[i] = u * u * u * a + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * b;
+        }
+        return pts;
+    }
+
     public static void Tube(Mesh mesh, Vector3[] pts, float radius, int radial = 8)
     {
         int n = pts.Length;
